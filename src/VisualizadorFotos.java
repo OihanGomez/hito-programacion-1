@@ -90,6 +90,7 @@ public class VisualizadorFotos extends JFrame {
         }
     }
 
+
     private void incrementarVisitas(String tituloFotografia) {
         String sql = "UPDATE Fotografias SET Visitas = Visitas + 1 WHERE Titulo = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
