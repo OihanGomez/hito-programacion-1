@@ -7,5 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" exported="" name="swingx-0.9.2" level="project" />
+    <orderEntry type="library" exported="" name="mysql.connector.j" level="project" />
   </component>
 </module>
