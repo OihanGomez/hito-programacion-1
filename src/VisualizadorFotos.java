@@ -11,6 +11,9 @@ public class VisualizadorFotos extends JFrame {
     private JXDatePicker datePicker;
     private JList<String> listaFotografias;
     private DefaultListModel<String> listModel;
+    private JLabel imagenLabel;
+    // Agrega un campo para la conexión a la base de datos
+    private Connection connection;
 
     public VisualizadorFotos() {
         super("Photography");
@@ -38,6 +41,11 @@ public class VisualizadorFotos extends JFrame {
         listaFotografias = new JList<>(listModel);
         panel3.add(new JScrollPane(listaFotografias));
 
+        // Panel 4:
+        imagenLabel = new JLabel();
+        panel4.add(imagenLabel);
+
+
         // Agregar los paneles a la ventana
         add(panel1);
         add(panel2);
@@ -49,6 +57,10 @@ public class VisualizadorFotos extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Cerrar la aplicación al cerrar la ventana
         setLocationRelativeTo(null); // Centrar la ventana en la pantalla
         setVisible(true); // Hacer visible la ventana
+
+        // Inicializar la conexión a la base de datos
+        ConexionBD conexionBD = new ConexionBD();
+        connection = conexionBD.getConexion();
 
         // Cargar los fotógrafos en el JComboBox al inicio
         cargarFotografos();
@@ -64,10 +76,6 @@ public class VisualizadorFotos extends JFrame {
     private void cargarFotografos() {
         List<String> nombresFotografos = new ArrayList<>();
 
-        // Obtener la conexión desde la clase ConexionBD
-
-        ConexionBD conexionBD = new ConexionBD();
-        Connection connection = conexionBD.getConexion();
         // Consulta SQL para obtener todos los fotógrafos
         String sql = "SELECT Nombre FROM Fotografos";
 
@@ -98,36 +106,43 @@ public class VisualizadorFotos extends JFrame {
         // Limpiar el modelo de la lista antes de cargar nuevas fotografías
         listModel.clear();
 
-        // Obtener la conexión desde la clase ConexionBD
-
-        ConexionBD conexionBD = new ConexionBD();
-        Connection connection = conexionBD.getConexion();
         // Obtener el fotógrafo seleccionado
         String fotografoSeleccionado = (String) comboBoxFotografos.getSelectedItem();
 
         // Obtener la fecha seleccionada
         java.util.Date fechaSeleccionada = datePicker.getDate();
-
         // Consulta SQL para obtener las fotografías del fotógrafo desde la fecha seleccionada
-        String sql = "SELECT Titulo FROM Fotografias f " +
+        String sql = "SELECT Titulo, Archivo FROM Fotografias f " +
                 "JOIN Fotografos ft ON f.IdFotografo = ft.IdFotografo " +
                 "WHERE ft.Nombre = ?";
 
         // Crear la declaración
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            // Set the first parameter which is the photographer's name
             pstmt.setString(1, fotografoSeleccionado);
 
-            // Si se ha seleccionado una fecha, agregar la condición en la consulta SQL
+            // If a date is selected, set the second parameter
             if (fechaSeleccionada != null) {
+                // Increment the parameter index
                 sql += " AND Fecha >= ?";
-                pstmt.setDate(2, new Date(fechaSeleccionada.getTime()));
             }
 
-            // Ejecutar la consulta
+            // Execute the query
             try (ResultSet rs = pstmt.executeQuery()) {
                 // Iterar sobre los resultados y agregar los títulos de las fotografías al modelo de la lista
                 while (rs.next()) {
                     listModel.addElement(rs.getString("Titulo"));
+                    // Incrementar el contador de visitas para la fotografía actual
+                    incrementarVisitas(rs.getString("Titulo"));
+                    // Obtener la ruta de la imagen desde la base de datos
+                    String rutaImagen = rs.getString("Archivo");
+                    // Crear un ImageIcon desde la ruta de la imagen
+                    ImageIcon imagenIcon = new ImageIcon(rutaImagen);
+                    // Escalar la imagen para que se ajuste al tamaño del JLabel
+                    Image imagen = imagenIcon.getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH);
+                    imagenIcon = new ImageIcon(imagen);
+                    // Asignar la imagen al JLabel
+                    imagenLabel.setIcon(imagenIcon);
                 }
             }
         } catch (SQLException e) {
@@ -135,7 +150,24 @@ public class VisualizadorFotos extends JFrame {
         }
     }
 
+    // Método para incrementar el contador de visitas para una fotografía
+    private void incrementarVisitas(String tituloFotografia) {
+        // Consulta SQL para incrementar el contador de visitas para la fotografía
+        String sql = "UPDATE Fotografias SET Visitas = Visitas + 1 WHERE Titulo = ?";
+        // Crear la declaración
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            // Establecer el parámetro
+            pstmt.setString(1, tituloFotografia);
+            // Ejecutar la actualización
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) {
-        VisualizadorFotos main = new VisualizadorFotos();
+        SwingUtilities.invokeLater(() -> {
+            new VisualizadorFotos();
+        });
     }
 }

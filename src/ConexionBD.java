@@ -12,7 +12,7 @@ public class ConexionBD {
 
     // Database credentials
     static final String USER = "root";
-    static final String PASSWORD = "g0rkA1974";
+    static final String PASSWORD = "zubiri";
 
     private Connection connection;
 
