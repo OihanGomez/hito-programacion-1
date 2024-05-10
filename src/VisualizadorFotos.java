@@ -33,7 +33,7 @@ public class VisualizadorFotos extends JFrame {
         add(panel2);
         add(panel3);
         add(panel4);
-        setSize(400, 300);
+        setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setVisible(true);
